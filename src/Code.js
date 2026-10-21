@@ -4,6 +4,18 @@ const DATETIME_FORMAT = 'dd/MM/yyyy HH:mm:ss';
 // Coluna (1-based) de data_hora em cada aba que recebe linhas novas.
 const COLUNAS_DATA_HORA = {Coletas_Brutas: 2, Coletas_Fatiadas: 2, Historico: 1, Logs: 1};
 
+const CABECALHO_PRODUTOS = [
+  'id', 'ativo', 'nome', 'categoria', 'gpu_tipo', 'loja', 'url', 'preco_alvo',
+  'preco_maximo', 'prioridade', 'selector_preco_pix', 'observacoes', 'ultima_coleta'
+];
+
+// Lista de produtos monitorados:
+// [id, nome, categoria, gpu_tipo, loja, url, preco_alvo, preco_maximo, prioridade, observacoes (opcional), selector_preco_pix (opcional)]
+// Produto novo: adicione uma linha no fim com id novo e de clasp push. Na proxima coleta (ou rodando
+// sincronizarProdutos) ele entra na aba Produtos. Quem ja esta na aba nao e alterado: ativo, alvo e maximo
+// dos produtos existentes continuam sendo editados na planilha.
+// Lojas: 'Kabum' (url = pagina do produto) e 'AliExpress' (url = pagina do anuncio e selector = 'busca:<termo>',
+// porque o preco do AliExpress so aparece na busca).
 const PRODUCTS = [
   ['GPU-001', 'Placa De Video Husky Alpha RX 580', 'Placa de video', 'RX 580 8GB', 'Kabum', 'https://www.kabum.com.br/produto/692461/placa-de-video-husky-alpha-rx-580-amd-8gb-gddr5-256-bit-hdmi-dvi-displayport-hvg580', '', 929.99, 'Media'],
   ['GPU-002', 'Placa De Video Vinik RX 580', 'Placa de video', 'RX 580 8GB', 'Kabum', 'https://www.kabum.com.br/produto/1056509/gpu-rx-580-8gb-gddr5-256-bits-dual-fan-vinik-gpuvk580v28gb2f', '', 890.38, 'Media'],
@@ -19,7 +31,13 @@ const PRODUCTS = [
   ['GPU-006', 'MSI RTX 3050 Ventus 2X OC 6GB', 'Placa de video', 'RTX 3050 6GB', 'Kabum', 'https://www.kabum.com.br/produto/1003726/placa-de-video-msi-rtx-3050-ventus-2x-oc-nvidia-geforce-6gb-gddr6-96-bit-g3050v2x6c', '', 1429.99, 'Media'],
   ['GPU-007', 'RX 7600 Challenger ASRock 8GB', 'Placa de video', 'RX 7600 8GB', 'Kabum', 'https://www.kabum.com.br/produto/459144/placa-de-video-rx-7600-challenger-asrock-amd-radeon-8gb-gddr6-90-ga41zz-00uanf', '', 1819.99, 'Alta'],
   ['GPU-008', 'RX 7600 Gaming OC Gigabyte 8GB', 'Placa de video', 'RX 7600 8GB', 'Kabum', 'https://www.kabum.com.br/produto/475647/placa-de-video-rx-7600-gaming-oc-8g-amd-radeon-gigabyte-8gb-gddr6-128bits-rgb-gv-r76gaming-oc-8gd', '', 1999.99, 'Alta'],
-  ['GPU-009', 'Vinik RX 5600 6GB', 'Placa de video', 'RX 5600 6GB', 'Kabum', 'https://www.kabum.com.br/produto/1029133/placa-de-video-gpu-amd-radeon-rx-5600-6gb-192bits-gddr6-dual-fan-gpuvk56006gb2f', '', 1139.99, 'Media']
+  ['GPU-009', 'Vinik RX 5600 6GB', 'Placa de video', 'RX 5600 6GB', 'Kabum', 'https://www.kabum.com.br/produto/1029133/placa-de-video-gpu-amd-radeon-rx-5600-6gb-192bits-gddr6-dual-fan-gpuvk56006gb2f', '', 1139.99, 'Media'],
+  ['PC-001', 'PC Gamer Ludic R5 5500 + RX 7600 16GB', 'PC montado', 'RX 7600 8GB', 'Kabum', 'https://www.kabum.com.br/produto/1012274/pc-gamer-ludic-by-bluepc-amd-ryzen-5-5500-radeon-rx-7600-8gb-16gb-ram-ssd-512gb-m-2-nvme-600w-80-plus-preto-7-fans-rgb-pgbp-lu2107', 4715.83, 5099, 'Media', 'Alvo = PC Spectrum R5 5500 + RX 7600 na Shopee por R$ 4.715,83 no PIX com cupom (19/10/2026)'],
+  ['CPU-001', 'Processador Intel Xeon E5-2650 V4 12 nucleos', 'Processador', 'Xeon E5-2650 v4', 'Kabum', 'https://www.kabum.com.br/produto/998284/processador-intel-xeon-e5-2650-v4-30mb-cache-2-20-ghz-socket-2011-3-12-core-oem', '', 594.99, 'Media', 'No lugar do E5-2690 v4 (14 nucleos, 2,6 GHz): a Kabum nao vende e o Mercado Livre bloqueia robos (19/10/2026)'],
+  ['ALI-001', 'Xeon E5-2690 V4 usado (anuncio 2.000+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007805707118.html', '', 89.99, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 89,99, 2.000+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
+  ['ALI-002', 'Xeon E5-2690 V4 (anuncio 1.000+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007532369181.html', '', 89.64, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 89,64, 1.000+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
+  ['ALI-003', 'Xeon E5-2690 V4 usado (anuncio 900+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005009930770548.html', '', 117.28, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 117,28, 900+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
+  ['ALI-004', 'Xeon E5-2690 V4 (anuncio 700+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007330296516.html', '', 69.99, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 69,99, 700+ vendidos, nota 4.9', 'busca:E5-2690-v4']
 ];
 
 function setupMonitor() {
@@ -57,13 +75,8 @@ function setupMonitor() {
     ['observacao', 'Screenshots exigem automacao externa; Apps Script faz coleta textual.']
   ]);
 
-  sheets.products.getRange(1, 1, 1, 13).setValues([[
-    'id', 'ativo', 'nome', 'categoria', 'gpu_tipo', 'loja', 'url', 'preco_alvo',
-    'preco_maximo', 'prioridade', 'selector_preco_pix', 'observacoes', 'ultima_coleta'
-  ]]);
-  sheets.products.getRange(2, 1, PRODUCTS.length, 13).setValues(PRODUCTS.map(p => [
-    p[0], true, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], 'h4', 'Carga inicial 2026-08-29', ''
-  ]));
+  sheets.products.getRange(1, 1, 1, 13).setValues([CABECALHO_PRODUTOS]);
+  sheets.products.getRange(2, 1, PRODUCTS.length, 13).setValues(PRODUCTS.map(p => linhaProduto_(p, 'Carga inicial 2026-08-29')));
 
   sheets.raw.getRange(1, 1, 1, 13).setValues([[
     'coleta_id', 'data_hora', 'id_produto', 'loja', 'url', 'status_http',
@@ -100,6 +113,11 @@ const PARSER_KABUM_DESC = 'preco_pix=__NEXT_DATA__ prices.priceWithDiscount (fal
 function coletarAgora() {
   const inicio = new Date();
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  try {
+    sincronizarProdutos_(ss);
+  } catch (err) {
+    log_(ss, 'ERRO', 'sincronizarProdutos', '', err.message, '');
+  }
   const productsSheet = ss.getSheetByName('Produtos');
   const values = productsSheet.getDataRange().getValues();
   const headers = values.shift();
@@ -119,6 +137,81 @@ function coletarAgora() {
   atualizarDashboard();
 }
 
+// Cadastra na aba Produtos os itens de PRODUCTS que ainda nao estao la e mostra no log quais entraram.
+// Pode rodar pelo editor quantas vezes quiser: nao coleta preco e nao mexe nos produtos que ja existem.
+function sincronizarProdutos() {
+  const novos = sincronizarProdutos_(SpreadsheetApp.openById(SPREADSHEET_ID));
+  console.log(novos.length ? 'Produtos novos: ' + novos.join(', ') : 'Nenhum produto novo em PRODUCTS');
+}
+
+// Compara pelo id e pela url: um item de PRODUCTS com id ou url que ja esta na aba e ignorado.
+// Retorna os ids cadastrados.
+function sincronizarProdutos_(ss) {
+  const linhas = ss.getSheetByName('Produtos').getDataRange().getValues().slice(1);
+  const ids = new Set(linhas.map(r => String(r[0])));
+  const urls = new Set(linhas.map(r => String(r[6])));
+  const novos = PRODUCTS.filter(p => !ids.has(p[0]) && !urls.has(p[5]));
+  if (!novos.length) return [];
+  const obs = 'Cadastrado pelo codigo em ' + Utilities.formatDate(new Date(), TIMEZONE, 'dd/MM/yyyy');
+  append_(ss, 'Produtos', novos.map(p => linhaProduto_(p, obs)));
+  novos.forEach(p => log_(ss, 'INFO', 'sincronizarProdutos', p[0], 'Produto novo cadastrado a partir de PRODUCTS', p[5]));
+  return novos.map(p => p[0]);
+}
+
+// Linha da aba Produtos (13 colunas, na ordem do cabecalho) a partir de um item de PRODUCTS.
+function linhaProduto_(p, obsPadrao) {
+  return [p[0], true, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[10] || 'h4', p[9] || obsPadrao, ''];
+}
+
+// AliExpress: a pagina do anuncio nao traz o preco (o navegador carrega depois), entao o preco sai da busca.
+// O cookie fixa Brasil e BRL: sem ele, os servidores do Google (EUA) recebem os precos em dolar.
+const ALI_COOKIE = 'aep_usuc_f=site=bra&c_tp=BRL&region=BR&b_locale=pt_BR';
+
+function ehAliExpress_(loja) {
+  return String(loja).toLowerCase() === 'aliexpress';
+}
+
+function urlBuscaAliExpress_(selector) {
+  const termo = String(selector || '').replace(/^busca:/, '').trim();
+  if (!termo) throw new Error('AliExpress sem termo de busca: preencha selector_preco_pix com busca:<termo>');
+  return 'https://pt.aliexpress.com/w/wholesale-' + encodeURIComponent(termo) + '.html';
+}
+
+// Baixa a pagina de onde sai o preco: Kabum = a url do produto; AliExpress = a busca do selector_preco_pix.
+// Cada endereco e baixado uma vez por execucao: os anuncios da mesma busca reaproveitam a pagina.
+// AliExpress: ate 3 tentativas para cair na versao da busca com preco original (ver buscaAliExpressCompleta_).
+const paginasBaixadas_ = {};
+function baixarPagina_(row, idx) {
+  const ali = ehAliExpress_(row[idx.loja]);
+  const url = ali ? urlBuscaAliExpress_(row[idx.selector_preco_pix]) : row[idx.url];
+  if (!paginasBaixadas_[url]) {
+    const headers = {'User-Agent': 'Mozilla/5.0 MonitorPrecos/1.0'};
+    if (ali) {
+      headers['Accept-Language'] = 'pt-BR';
+      headers.Cookie = ALI_COOKIE;
+    }
+    let pagina = null;
+    for (let tentativa = 0; tentativa < (ali ? 3 : 1); tentativa++) {
+      const resp = UrlFetchApp.fetch(url, {muteHttpExceptions: true, followRedirects: true, headers: headers});
+      pagina = {status: resp.getResponseCode(), html: resp.getContentText()};
+      if (!ali || buscaAliExpressCompleta_(pagina.html)) break;
+    }
+    paginasBaixadas_[url] = pagina;
+  }
+  return paginasBaixadas_[url];
+}
+
+// A busca do AliExpress alterna entre duas versoes (teste A/B) que mostram precos diferentes para o mesmo anuncio
+// (em 19/10/2026: R$ 89,99 numa e R$ 83,59 na outra). A usada aqui e a que traz o preco original (originalPrice);
+// a outra nao tem esse campo em nenhum anuncio. Misturar as duas faria o preco subir e cair sem motivo.
+function buscaAliExpressCompleta_(html) {
+  return extrairItensAliExpress_(html).some(it => (it.prices || {}).originalPrice);
+}
+
+function parsePagina_(html, row, idx) {
+  return ehAliExpress_(row[idx.loja]) ? parseAliExpress_(html, row[idx.url]) : parseKabum_(html, row[idx.url]);
+}
+
 // Coleta um produto e grava em Coletas_Brutas, Coletas_Fatiadas e Historico.
 // Retorna 'OK' ou 'ERRO' (o mesmo valor gravado em Coletas_Brutas.status_coleta).
 function collectProduct_(ss, row, idx, linhaProduto) {
@@ -126,14 +219,10 @@ function collectProduct_(ss, row, idx, linhaProduto) {
   const coletaId = Utilities.formatDate(now, TIMEZONE, 'yyyyMMdd-HHmmss') + '-' + row[idx.id];
   const refPrice = Number(row[idx.preco_maximo]) || 0;
   try {
-    const response = UrlFetchApp.fetch(row[idx.url], {
-      muteHttpExceptions: true,
-      followRedirects: true,
-      headers: {'User-Agent': 'Mozilla/5.0 MonitorPrecos/1.0'}
-    });
-    const status = response.getResponseCode();
-    const html = response.getContentText();
-    const parsed = parseKabum_(html, row[idx.url]);
+    const pagina = baixarPagina_(row, idx);
+    const status = pagina.status;
+    const html = pagina.html;
+    const parsed = parsePagina_(html, row, idx);
     const rawText = stripHtml_(html).slice(0, 1500);
     const rawPrices = findPrices_(stripHtml_(html));
     const avaliacao = avaliarColeta_(status, parsed, refPrice);
@@ -170,7 +259,7 @@ function avaliarColeta_(httpStatus, parsed, ref) {
   if (Number(httpStatus) !== 200) return {status: 'ERRO', motivo: 'HTTP ' + httpStatus};
   const preco = parsed.precoPix;
   if (parsed.status !== 'OK' || typeof preco !== 'number' || !(preco > 0)) {
-    return {status: 'ERRO', motivo: 'Preco PIX nao encontrado'};
+    return {status: 'ERRO', motivo: parsed.erro || 'Preco PIX nao encontrado'};
   }
   if (!precoValido_(preco, ref)) {
     return {status: 'ERRO', motivo: 'Preco suspeito: ' + fmtBRL_(preco) + ' (abaixo de ' + Math.round(LIMITE_PRECO_SUSPEITO * 100) + '% do preco_maximo, provavel parcela)'};
@@ -245,6 +334,69 @@ function extractKabumPrices_(html, url) {
     discountPercentage: num('discountPercentage')
   };
   return r.priceWithDiscount > 0 ? r : null;
+}
+
+// Le um anuncio na busca do AliExpress. A lista de anuncios vem no JSON "itemList":{"content":[...]} da pagina.
+// preco_pix = prices.salePrice.minPrice (o "a partir de" do anuncio; no AliExpress e o mesmo no PIX e no cartao)
+// preco_de = prices.originalPrice.minPrice. O anuncio e achado pelo numero da url (/item/<numero>.html).
+function parseAliExpress_(html, url) {
+  const idAnuncio = (String(url).match(/\/item\/(\d+)\.html/) || [])[1] || '';
+  const itens = extrairItensAliExpress_(html);
+  const item = itens.find(it => it.productId === idAnuncio);
+  const resultado = {
+    titulo: '', precoDe: '', precoPix: '', descontoPix: '', parcelamento: '', precoParcela: '', qtdParcelas: '',
+    selector: 'ali_busca', status: 'ERRO', confianca: 'Baixa', obs: '', erro: ''
+  };
+  if (!itens.length) return Object.assign(resultado, {erro: 'Busca do AliExpress sem lista de anuncios (captcha ou pagina mudou)'});
+  if (!itens.some(it => (it.prices || {}).originalPrice)) return Object.assign(resultado, {erro: 'Busca do AliExpress veio na versao sem preco original (teste A/B) nas 3 tentativas'});
+  if (!item) return Object.assign(resultado, {erro: 'Anuncio ' + idAnuncio + ' fora da 1a pagina da busca (' + itens.length + ' anuncios)'});
+
+  const precos = item.prices || {};
+  const venda = precos.salePrice || {};
+  const original = precos.originalPrice || {};
+  resultado.titulo = (item.title || {}).displayTitle || '';
+  resultado.obs = 'Posicao ' + (itens.indexOf(item) + 1) + ' de ' + itens.length + ' na busca; ' + String((item.trade || {}).tradeDesc || '').replace(/\s+/g, ' ').trim();
+  if (venda.currencyCode !== 'BRL') return Object.assign(resultado, {erro: 'Preco em ' + venda.currencyCode + ' em vez de BRL'});
+
+  const preco = Number(venda.minPrice) || 0;
+  return Object.assign(resultado, {
+    precoDe: Number(original.minPrice) || '',
+    precoPix: preco || '',
+    descontoPix: venda.discount ? venda.discount + '% de desconto' : '',
+    status: preco > 0 ? 'OK' : 'ERRO',
+    confianca: 'Media'
+  });
+}
+
+function extrairItensAliExpress_(html) {
+  const pos = html.indexOf('"itemList":{"content":[');
+  if (pos < 0) return [];
+  try {
+    return JSON.parse(extrairArrayJson_(html, html.indexOf('[', pos)));
+  } catch (e) {
+    return [];
+  }
+}
+
+// Recorta o array JSON que comeca em texto[inicio] (um '['), respeitando colchetes dentro de strings.
+function extrairArrayJson_(texto, inicio) {
+  let nivel = 0;
+  let emString = false;
+  for (let i = inicio; i < texto.length; i++) {
+    const c = texto[i];
+    if (emString) {
+      if (c === '\\') i++;
+      else if (c === '"') emString = false;
+    } else if (c === '"') {
+      emString = true;
+    } else if (c === '[' || c === '{') {
+      nivel++;
+    } else if (c === ']' || c === '}') {
+      nivel--;
+      if (nivel === 0) return texto.slice(inicio, i + 1);
+    }
+  }
+  return '';
 }
 
 function extractLdJsonPrice_(html) {
@@ -351,18 +503,33 @@ function atualizarAcompanhamento() {
   console.log('Acompanhamento atualizado: ' + rows.length + ' produtos');
 }
 
-// Roda o parser em todos os produtos ativos e so mostra no log (nao grava nada na planilha).
+// Roda o parser (Kabum ou AliExpress) em todos os produtos ativos e so mostra no log (nao grava nada na planilha).
 function testarParserKabum() {
   const values = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Produtos').getDataRange().getValues();
   const headers = values.shift();
   const idx = Object.fromEntries(headers.map((h, i) => [h, i]));
   const ativos = values.filter(r => r[idx.ativo] === true && r[idx.url]);
   console.log('Produtos ativos: ' + ativos.length);
-  ativos.forEach(r => {
-    const resp = UrlFetchApp.fetch(r[idx.url], {muteHttpExceptions: true, followRedirects: true, headers: {'User-Agent': 'Mozilla/5.0 MonitorPrecos/1.0'}});
-    const parsed = parseKabum_(resp.getContentText(), r[idx.url]);
-    console.log(r[idx.id] + ' | HTTP ' + resp.getResponseCode() + ' | PIX ' + parsed.precoPix + ' | normal ' + parsed.precoDe + ' | ' + parsed.selector + ' | ' + parsed.descontoPix);
-  });
+  ativos.forEach(r => testarProduto_(r, idx));
+}
+
+// Testa o leitor do AliExpress com os itens de PRODUCTS (nao precisam estar na planilha) e so mostra no log.
+// Rode depois do clasp push: ERRO aqui quer dizer que os servidores do Google nao estao conseguindo ler a busca.
+function testarParserAliExpress() {
+  const idx = Object.fromEntries(CABECALHO_PRODUTOS.map((h, i) => [h, i]));
+  PRODUCTS.map(p => linhaProduto_(p, '')).filter(r => ehAliExpress_(r[idx.loja])).forEach(r => testarProduto_(r, idx));
+}
+
+function testarProduto_(r, idx) {
+  try {
+    const pagina = baixarPagina_(r, idx);
+    const parsed = parsePagina_(pagina.html, r, idx);
+    const avaliacao = avaliarColeta_(pagina.status, parsed, Number(r[idx.preco_maximo]) || 0);
+    console.log(r[idx.id] + ' | HTTP ' + pagina.status + ' | ' + avaliacao.status + (avaliacao.motivo ? ' (' + avaliacao.motivo + ')' : '') +
+      ' | PIX ' + parsed.precoPix + ' | normal ' + parsed.precoDe + ' | ' + parsed.selector + ' | ' + parsed.descontoPix + (parsed.obs && parsed.selector === 'ali_busca' ? ' | ' + parsed.obs : ''));
+  } catch (err) {
+    console.log(r[idx.id] + ' | EXCECAO ' + err.message);
+  }
 }
 
 // Recalcula a aba Dashboard com valores (nao formulas). Chamado no fim de coletarAgora().

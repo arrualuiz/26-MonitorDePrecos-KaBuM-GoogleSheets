@@ -1,5 +1,16 @@
 # Changelog
 
+## Próxima versão – 19/10/2026 (ainda falta o `clasp push`)
+
+- Cadastro pelo código: produto novo vai no fim de `PRODUCTS` e entra sozinho na aba Produtos no começo de `coletarAgora()` (ou rodando `sincronizarProdutos()`). Compara por `id` e `url` e só acrescenta: produtos que já estão na aba não são alterados. Se a sincronização falhar, fica um `ERRO` em Logs e a coleta segue.
+- `PRODUCTS` ganhou a coluna opcional `observacoes`.
+- Novo produto `PC-001`: PC Gamer Ludic (Ryzen 5 5500, RX 7600 8GB, 16GB, SSD 512GB NVMe, 600W) da Kabum, R$ 5.099,00 no PIX em 19/10. `preco_alvo` = R$ 4.715,83, o preço no PIX com cupom de um PC parecido na Shopee (Spectrum, SSD 480GB, 500W), que o monitor não consegue ler.
+- Novo produto `CPU-001`: Xeon E5-2650 v4 (12 núcleos, 2,2 GHz) da Kabum, R$ 594,99 no PIX em 19/10. Entrou no lugar do E5-2690 v4 (14 núcleos, 2,6 GHz), que a Kabum não vende; no Mercado Livre a busca manda robôs para uma verificação de conta e a API responde 403.
+- Leitor do AliExpress (`parseAliExpress_()`): o preço sai da busca (`selector_preco_pix` = `busca:<termo>`), porque a página do anúncio vem sem preço. Cookie de Brasil/BRL, uma busca por termo em cada coleta, e só vale a versão da busca com `originalPrice` (a busca tem um teste A/B com preços diferentes; até 3 tentativas). Moeda diferente de BRL, anúncio fora da 1ª página ou captcha viram `ERRO` com o motivo.
+- `collectProduct_()` e `testarParserKabum()` escolhem o parser pela `loja` (`baixarPagina_`/`parsePagina_`). Nova `testarParserAliExpress()`.
+- `avaliarColeta_()` usa o motivo que o parser der (`parsed.erro`), quando houver.
+- Novos produtos `ALI-001` a `ALI-004`: os 4 anúncios do Xeon E5-2690 v4 avulso (sem kit) que mais venderam na busca de 19/10 (2.000+, 1.000+, 900+ e 700+ vendidos, todos nota 4.9), de R$ 69,99 a R$ 117,28.
+
 ## v3 – 29/09/2026
 
 - `data_hora` com hora (`dd/MM/yyyy HH:mm:ss`) em Coletas_Brutas, Coletas_Fatiadas, Historico e Logs.
