@@ -10,6 +10,7 @@
 - `collectProduct_()` e `testarParserKabum()` escolhem o parser pela `loja` (`baixarPagina_`/`parsePagina_`). Nova `testarParserAliExpress()`.
 - `avaliarColeta_()` usa o motivo que o parser der (`parsed.erro`), quando houver.
 - Novos produtos `ALI-001` a `ALI-004`: os 4 anúncios do Xeon E5-2690 v4 avulso (sem kit) que mais venderam na busca de 19/10 (2.000+, 1.000+, 900+ e 700+ vendidos, todos nota 4.9), de R$ 69,99 a R$ 117,28.
+- Novo produto `MON-001` (02/11): monitor Acer Nitro KG270 P0bi (27", VA, 144 Hz) da Kabum, R$ 619,99 no Esquenta 11.11 (até 13/11) e R$ 999,99 fora da oferta. `preco_alvo` = R$ 559, o menor preço de outubro no Pelando.
 
 ## v3 – 29/09/2026
 

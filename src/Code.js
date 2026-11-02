@@ -37,7 +37,8 @@ const PRODUCTS = [
   ['ALI-001', 'Xeon E5-2690 V4 usado (anuncio 2.000+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007805707118.html', '', 89.99, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 89,99, 2.000+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
   ['ALI-002', 'Xeon E5-2690 V4 (anuncio 1.000+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007532369181.html', '', 89.64, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 89,64, 1.000+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
   ['ALI-003', 'Xeon E5-2690 V4 usado (anuncio 900+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005009930770548.html', '', 117.28, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 117,28, 900+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
-  ['ALI-004', 'Xeon E5-2690 V4 (anuncio 700+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007330296516.html', '', 69.99, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 69,99, 700+ vendidos, nota 4.9', 'busca:E5-2690-v4']
+  ['ALI-004', 'Xeon E5-2690 V4 (anuncio 700+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007330296516.html', '', 69.99, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 69,99, 700+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
+  ['MON-001', 'Monitor Acer Nitro KG270 P0bi 27 VA 144Hz', 'Monitor', 'Monitor 27 144Hz', 'Kabum', 'https://www.kabum.com.br/produto/1049978/monitor-gamer-acer-nitro-kg270-p0bi-27-fhd-144hz-1ms-hdmi-preto-um-hx0aa-011', 559, 999.99, 'Alta', 'Alvo = menor nivel de out/2026 no Pelando (ML R$ 555,91 em 17/10, R$ 559 em 30/10; Amazon R$ 543 em 02/10). Kabum em 02/11/2026: R$ 619,99 no Esquenta 11.11 (ate 13/11 10h), fora da oferta R$ 999,99']
 ];
 
 function setupMonitor() {
