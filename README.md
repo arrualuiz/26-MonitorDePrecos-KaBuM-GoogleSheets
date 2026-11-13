@@ -1,6 +1,6 @@
 # AcompanhaPrecos
 
-Monitor de preços da Kabum (e de anúncios do AliExpress) feito com **Google Sheets + Google Apps Script**. Todo dia, perto das 23h, o script abre a página de cada produto cadastrado, extrai o preço PIX e grava o histórico na planilha. A aba **Acompanhamento** mostra se o preço subiu ou caiu, e o **Dashboard** mostra se a coleta automática está saudável.
+Monitor de preços feito com **Google Sheets + Google Apps Script**. Lê a Kabum, anúncios do AliExpress, a Dafiti e as lojas VTEX de tênis (Artwalk, Authentic Feet, Magic Feet). Todo dia, perto das 23h, o script abre a página de cada produto cadastrado, extrai o preço PIX e grava o histórico na planilha. A aba **Acompanhamento** mostra se o preço subiu ou caiu, e o **Dashboard** mostra se a coleta automática está saudável.
 
 | Item | Valor |
 |---|---|
@@ -37,6 +37,23 @@ Gatilho diário (~23h)
 3. **`<h4>`** (layout antigo da página).
 
 > Até 29/09/2026 o parser usava o `<h4>` e, na falta dele, o **segundo "R$" da página**. Em ~09/09 a Kabum tirou o `<h4>` e o segundo "R$" passou a ser o **valor da parcela** (ex.: 295,44 em vez de 2.954,43). Por isso ~230 coletas antigas estão com preço errado. Veja [Regras de status](#regras-de-status).
+
+### Qual leitor cada produto usa (`tipoLoja_()`)
+
+| Tipo | Quando | Leitor | De onde vem o preço |
+|---|---|---|---|
+| `aliexpress` | `loja` = `AliExpress` | `parseAliExpress_()` | A busca do `selector_preco_pix` (ver abaixo) |
+| `vtex` | `url` em `LOJAS_VTEX` (artwalk, authenticfeet, magicfeet) | `parseVtex_()` | API pública da loja: `<loja>/api/catalog_system/pub/products/search/<produto>/p` |
+| `dafiti` | `url` em dafiti.com.br | `parseDafiti_()` | `itemprop="price"` da página do produto |
+| `kabum` | o resto | `parseKabum_()` | `__NEXT_DATA__` (ver acima) |
+
+### Lojas de roupa e calçado (VTEX e Dafiti): tamanho e estoque
+
+- Cada produto tem vários números, e cada número tem o seu estoque. O preço gravado é o **menor entre os números com estoque**. A coluna `observacoes` de Coletas_Fatiadas guarda quais números tinham estoque.
+- Para acompanhar um número só, ponha `tam:<numero>` em `selector_preco_pix` (ex.: `tam:42`; o 11º campo em `PRODUCTS`). Aí o preço é o desse número e, se ele acabar, a coleta vira `ERRO` com `Esgotado no tamanho 42`.
+- **VTEX mostra preço até de produto esgotado** (o preço fica lá, desatualizado). Por isso o leitor só olha os itens com `AvailableQuantity` > 0; sem nenhum, a coleta vira `ERRO` com `Esgotado em todos os tamanhos`.
+- Na Dafiti, os números listados na página (`radio-button-size-block`) são os que têm estoque. O preço "de" vem de `data-field="specialPrice"`.
+- Artwalk, Authentic Feet e Magic Feet são do mesmo grupo e dividem catálogo e preço: cadastrar o mesmo produto nas três não ajuda.
 
 ### AliExpress (`parseAliExpress_()`)
 
@@ -115,6 +132,7 @@ A página do anúncio do AliExpress **não traz o preço** (o navegador carrega 
 | `atualizarDashboard()` | Sim | Recalcula a aba Dashboard. |
 | `testarParserKabum()` | Sim (**não grava nada**) | Busca todos os produtos ativos da aba Produtos (Kabum e AliExpress) e mostra no log o preço e o status que a coleta daria. Use depois de mexer no parser. |
 | `testarParserAliExpress()` | Sim (**não grava nada**) | Faz o mesmo só com os anúncios do AliExpress que estão em `PRODUCTS` (não precisam estar na planilha). Rode logo depois do `clasp push` para ver se os servidores do Google conseguem ler a busca. |
+| `testarLojasNovas()` | Sim (**não grava nada**) | Faz o mesmo com todos os produtos de `PRODUCTS` que não são da Kabum (AliExpress, Dafiti e VTEX). Mostra preço, desconto e os números com estoque. |
 | `migrarColetasBrutasV2()` | Sim (idempotente) | Migração de 29/09/2026: formato data/hora, `status_coleta` retroativo, Config. |
 | `criarGatilhoDiario23h()` | Sim | Apaga os gatilhos de `coletarAgora` e cria um diário às 23h. |
 | `criarGatilhoCada6Horas()` | Sim | **Apesar do nome, cria o gatilho diário das 23h** (só chama `criarGatilhoDiario23h`). |
@@ -140,13 +158,14 @@ Produto novo entra **pelo código**:
 
 1. No fim da constante `PRODUCTS` (`src/Code.js`), adicione uma linha `[id, nome, categoria, gpu_tipo, loja, url, preco_alvo, preco_maximo, prioridade, observacoes]`:
    - `id` único que segue a numeração (`GPU-010`, `KIT-007`, `PC-002`...);
-   - `loja` = `Kabum` ou `AliExpress` e `url` sem os parâmetros depois do `?` (no AliExpress, `https://pt.aliexpress.com/item/<numero>.html`);
+   - `loja` = `Kabum`, `AliExpress`, `Dafiti`, `Authentic Feet`, `Artwalk` ou `Magic Feet` e `url` sem os parâmetros depois do `?` (no AliExpress, `https://pt.aliexpress.com/item/<numero>.html`; nas lojas VTEX, o endereço termina em `/p`);
+   - Dafiti e VTEX: um 11º campo opcional `'tam:42'` para acompanhar um número só (ver [tamanho e estoque](#lojas-de-roupa-e-calçado-vtex-e-dafiti-tamanho-e-estoque));
    - AliExpress: um 11º campo com o termo da busca onde o anúncio aparece, `'busca:E5-2690-v4'` (ver [AliExpress](#aliexpress-parsealiexpress_));
    - `preco_maximo` = o preço PIX de hoje (serve de referência para `CARO` e para o preço suspeito);
    - `preco_alvo` opcional (`''` se não tiver), para receber `COMPRAR`;
    - `observacoes` opcional; sem ela, fica "Cadastrado pelo codigo em dd/mm/aaaa".
 2. `node --check src/Code.js` e `clasp push`.
-3. Na próxima coleta das 23h o produto entra sozinho na aba Produtos (com `ativo` = `TRUE`) e já é coletado. Para ver na hora, rode `sincronizarProdutos()` pelo editor e depois `testarParserKabum()`.
+3. Na próxima coleta das 23h o produto entra sozinho na aba Produtos (com `ativo` = `TRUE`) e já é coletado. Para ver na hora, rode `sincronizarProdutos()` pelo editor e depois `testarParserKabum()` (ou `testarLojasNovas()`, que testa direto do código os produtos que não são da Kabum).
 
 Depois de cadastrado, o produto é editado **na planilha**: a sincronização só acrescenta, então mudar o alvo ou o máximo dele em `PRODUCTS` não altera a aba Produtos.
 
@@ -224,14 +243,15 @@ Planilha: `1hgSeSzOpBzxyJji-S2GPG8xECaZlpr0RlBsaCNQrLZE`. Todo o código está e
 |---|---|
 | Coleta | `coletarAgora`, `collectProduct_`, `avaliarColeta_` |
 | Cadastro | `CABECALHO_PRODUTOS`, `PRODUCTS`, `sincronizarProdutos`, `sincronizarProdutos_`, `linhaProduto_` |
-| Download | `baixarPagina_` (uma vez por endereço por execução), `parsePagina_` (escolhe o parser pela `loja`) |
+| Download | `baixarPagina_` (uma vez por endereço por execução), `tipoLoja_` (qual leitor), `parsePagina_` (chama o leitor) |
+| Parser VTEX e Dafiti | `parseVtex_`, `urlApiVtex_`, `LOJAS_VTEX`, `parseDafiti_`, `escolherTamanho_`, `tamanhoProcurado_`, `resultadoVazio_` |
 | Parser AliExpress | `parseAliExpress_`, `extrairItensAliExpress_`, `extrairArrayJson_`, `buscaAliExpressCompleta_`, `urlBuscaAliExpress_`, `ehAliExpress_`, `ALI_COOKIE` |
 | Parser Kabum | `parseKabum_`, `extractKabumPrices_` (`__NEXT_DATA__`), `extractLdJsonPrice_`, `stripHtml_`, `findPrices_`, `parsePrice_` |
 | Abas calculadas | `atualizarAcompanhamento`, `atualizarDashboard` |
 | Histórico/preço | `getLastPrice_`, `getMinPrice_`, `precoValido_`, `getStatusPrice_`, `round2_`, `fmtBRL_` |
 | Infra | `append_`, `log_`, `formatSheet_`, `resetSheet_`, `simpleHash_` |
 | Gatilhos | `criarGatilhoDiario23h`, `criarGatilhoCada6Horas` (na prática, diário) |
-| Manutenção | `testarParserKabum`, `testarParserAliExpress`, `testarProduto_`, `migrarColetasBrutasV2`, `setupMonitor` (bloqueada) |
+| Manutenção | `testarParserKabum`, `testarParserAliExpress`, `testarLojasNovas`, `testarProdutosDoCodigo_`, `testarProduto_`, `migrarColetasBrutasV2`, `setupMonitor` (bloqueada) |
 
 ---
 
@@ -251,4 +271,5 @@ Planilha: `1hgSeSzOpBzxyJji-S2GPG8xECaZlpr0RlBsaCNQrLZE`. Todo o código está e
 - Ideias: alerta por e-mail quando cair abaixo do `preco_alvo`, gráfico de preço por produto, outras lojas.
 - **Shopee não dá** (testado em 19/10/2026): a página do produto vem sem nome e sem preço (é montada no navegador) e a API `api/v4/item/get` responde 403. Para algo da Shopee, procuro o mesmo produto na Kabum e uso o preço da Shopee como `preco_alvo` (foi assim com o `PC-001`).
 - **Mercado Livre também não dá** (testado em 19/10/2026): a busca redireciona para uma verificação de conta (captcha) e `api.mercadolibre.com` responde 403 sem login. O `CPU-001` (Xeon E5-2650 v4 da Kabum) entrou no lugar do E5-2690 v4 que eu queria acompanhar no ML.
+- **Lojas de tênis (testado do PC em 13/11/2026):** Centauro, Nike, Adidas e Netshoes respondem 403 para robô e ficam de fora. A Kanui não existe mais (o endereço vai para a Dafiti). O Zoom abre, mas quase não tem chinelo Nike. Dafiti e as lojas VTEX funcionaram daqui; dos servidores do Google ainda falta rodar `testarLojasNovas()`.
 - **AliExpress ainda não testado nos servidores do Google.** Daqui do PC a busca abre e os 4 anúncios `ALI-001` a `ALI-004` deram OK; depois do `clasp push`, rodar `testarParserAliExpress()`. Se der ERRO lá (captcha, moeda), desativar os `ALI-*` na aba Produtos.

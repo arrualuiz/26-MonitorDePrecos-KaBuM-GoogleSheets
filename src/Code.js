@@ -38,7 +38,12 @@ const PRODUCTS = [
   ['ALI-002', 'Xeon E5-2690 V4 (anuncio 1.000+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007532369181.html', '', 89.64, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 89,64, 1.000+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
   ['ALI-003', 'Xeon E5-2690 V4 usado (anuncio 900+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005009930770548.html', '', 117.28, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 117,28, 900+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
   ['ALI-004', 'Xeon E5-2690 V4 (anuncio 700+ vendidos)', 'Processador', 'Xeon E5-2690 v4', 'AliExpress', 'https://pt.aliexpress.com/item/1005007330296516.html', '', 69.99, 'Media', 'Busca E5-2690 v4 em 19/10/2026: R$ 69,99, 700+ vendidos, nota 4.9', 'busca:E5-2690-v4'],
-  ['MON-001', 'Monitor Acer Nitro KG270 P0bi 27 VA 144Hz', 'Monitor', 'Monitor 27 144Hz', 'Kabum', 'https://www.kabum.com.br/produto/1049978/monitor-gamer-acer-nitro-kg270-p0bi-27-fhd-144hz-1ms-hdmi-preto-um-hx0aa-011', 559, 999.99, 'Alta', 'Alvo = menor nivel de out/2026 no Pelando (ML R$ 555,91 em 17/10, R$ 559 em 30/10; Amazon R$ 543 em 02/10). Kabum em 02/11/2026: R$ 619,99 no Esquenta 11.11 (ate 13/11 10h), fora da oferta R$ 999,99']
+  ['MON-001', 'Monitor Acer Nitro KG270 P0bi 27 VA 144Hz', 'Monitor', 'Monitor 27 144Hz', 'Kabum', 'https://www.kabum.com.br/produto/1049978/monitor-gamer-acer-nitro-kg270-p0bi-27-fhd-144hz-1ms-hdmi-preto-um-hx0aa-011', 559, 999.99, 'Alta', 'Alvo = menor nivel de out/2026 no Pelando (ML R$ 555,91 em 17/10, R$ 559 em 30/10; Amazon R$ 543 em 02/10). Kabum em 02/11/2026: R$ 619,99 no Esquenta 11.11 (ate 13/11 10h), fora da oferta R$ 999,99'],
+  ['CHI-001', 'Chinelo Nike Victori One Masculino Preto (Dafiti 8636301)', 'Chinelo', 'Nike Victori One', 'Dafiti', 'https://www.dafiti.com.br/Chinelo-Nike-Victori-One-Masculino-8636301.html', 100, 109.99, 'Alta', 'Dafiti em 13/11/2026: R$ 109,99 (de R$ 249,99), tamanhos 37, 38, 42, 43, 44'],
+  ['CHI-002', 'Chinelo Nike Victori One Masculino (Dafiti 8831089)', 'Chinelo', 'Nike Victori One', 'Dafiti', 'https://www.dafiti.com.br/Chinelo-Nike-Victori-One-Masculino-8831089.html', 100, 159.99, 'Media', 'Dafiti em 13/11/2026: R$ 159,99 (de R$ 229,99), tamanhos 37, 38, 42, 43, 44'],
+  ['CHI-003', 'Chinelo Nike Victori One Masculino Azul (Dafiti 15271691)', 'Chinelo', 'Nike Victori One', 'Dafiti', 'https://www.dafiti.com.br/Chinelo-Nike-Victori-One-Masculino-15271691.html', 100, 159.99, 'Media', 'Dafiti em 13/11/2026: R$ 159,99 (de R$ 249,99), tamanhos 42, 43, 44'],
+  ['CHI-004', 'Chinelo Nike Victori One Preto (Dafiti 8843713)', 'Chinelo', 'Nike Victori One', 'Dafiti', 'https://www.dafiti.com.br/Chinelo-Nike-Victori-One-Preto-8843713.html', 100, 169.99, 'Media', 'Dafiti em 13/11/2026: R$ 169,99 (de R$ 249,99), tamanhos 42, 43, 44'],
+  ['CHI-005', 'Chinelo Nike Victori One Masculino Preto (Authentic Feet)', 'Chinelo', 'Nike Victori One', 'Authentic Feet', 'https://www.authenticfeet.com.br/chinelo-nike-victori-one-masculino-fz311-0-001/p', 100, 199.99, 'Media', 'Authentic Feet em 13/11/2026: R$ 199,99, so o 38 com estoque. Mesmo catalogo da Artwalk e da Magic Feet']
 ];
 
 function setupMonitor() {
@@ -178,13 +183,43 @@ function urlBuscaAliExpress_(selector) {
   return 'https://pt.aliexpress.com/w/wholesale-' + encodeURIComponent(termo) + '.html';
 }
 
-// Baixa a pagina de onde sai o preco: Kabum = a url do produto; AliExpress = a busca do selector_preco_pix.
-// Cada endereco e baixado uma vez por execucao: os anuncios da mesma busca reaproveitam a pagina.
+// Lojas na plataforma VTEX: o preco sai da API publica de busca da loja, pelo endereco do produto (.../<slug>/p).
+// Artwalk, Authentic Feet e Magic Feet sao do mesmo grupo e dividem o catalogo.
+const LOJAS_VTEX = ['artwalk.com.br', 'authenticfeet.com.br', 'magicfeet.com.br'];
+
+function hostUrl_(url) {
+  return (String(url).match(/^https?:\/\/(?:www\.)?([^\/?#]+)/i) || [])[1] || '';
+}
+
+// Qual leitor usar: 'aliexpress' (pela loja), 'vtex' ou 'dafiti' (pelo endereco) e 'kabum' para o resto.
+function tipoLoja_(row, idx) {
+  if (ehAliExpress_(row[idx.loja])) return 'aliexpress';
+  const host = hostUrl_(row[idx.url]).toLowerCase();
+  if (LOJAS_VTEX.indexOf(host) >= 0) return 'vtex';
+  if (host === 'dafiti.com.br') return 'dafiti';
+  return 'kabum';
+}
+
+function urlApiVtex_(url) {
+  const m = String(url).split('?')[0].match(/^(https?:\/\/[^\/]+)\/(.+)\/p\/?$/i);
+  if (!m) throw new Error('Endereco VTEX fora do formato https://loja/<produto>/p: ' + url);
+  return m[1] + '/api/catalog_system/pub/products/search/' + m[2] + '/p';
+}
+
+// Tamanho opcional em selector_preco_pix (tam:41): o preco passa a ser o desse numero e, sem estoque nele, a coleta e ERRO.
+function tamanhoProcurado_(selector) {
+  const m = String(selector || '').match(/^tam:\s*(.+)$/i);
+  return m ? m[1].trim() : '';
+}
+
+// Baixa a pagina de onde sai o preco: Kabum e Dafiti = a url do produto; AliExpress = a busca do selector_preco_pix;
+// VTEX = a API de busca da loja. Cada endereco e baixado uma vez por execucao: os anuncios da mesma busca reaproveitam a pagina.
 // AliExpress: ate 3 tentativas para cair na versao da busca com preco original (ver buscaAliExpressCompleta_).
 const paginasBaixadas_ = {};
 function baixarPagina_(row, idx) {
-  const ali = ehAliExpress_(row[idx.loja]);
-  const url = ali ? urlBuscaAliExpress_(row[idx.selector_preco_pix]) : row[idx.url];
+  const tipo = tipoLoja_(row, idx);
+  const ali = tipo === 'aliexpress';
+  const url = ali ? urlBuscaAliExpress_(row[idx.selector_preco_pix]) : (tipo === 'vtex' ? urlApiVtex_(row[idx.url]) : row[idx.url]);
   if (!paginasBaixadas_[url]) {
     const headers = {'User-Agent': 'Mozilla/5.0 MonitorPrecos/1.0'};
     if (ali) {
@@ -210,7 +245,80 @@ function buscaAliExpressCompleta_(html) {
 }
 
 function parsePagina_(html, row, idx) {
-  return ehAliExpress_(row[idx.loja]) ? parseAliExpress_(html, row[idx.url]) : parseKabum_(html, row[idx.url]);
+  const tipo = tipoLoja_(row, idx);
+  const tamanho = tamanhoProcurado_(row[idx.selector_preco_pix]);
+  if (tipo === 'aliexpress') return parseAliExpress_(html, row[idx.url]);
+  if (tipo === 'vtex') return parseVtex_(html, tamanho);
+  if (tipo === 'dafiti') return parseDafiti_(html, tamanho);
+  return parseKabum_(html, row[idx.url]);
+}
+
+// Resultado vazio dos leitores (mesmos campos que parseKabum_ devolve).
+function resultadoVazio_(selector) {
+  return {
+    titulo: '', precoDe: '', precoPix: '', descontoPix: '', parcelamento: '', precoParcela: '', qtdParcelas: '',
+    selector: selector, status: 'ERRO', confianca: 'Baixa', obs: '', erro: ''
+  };
+}
+
+// Escolhe o preco entre os tamanhos com estoque: o menor de todos ou, com tam:<numero>, o desse numero.
+// opcoes = [{tamanho, preco, precoDe}]. Sem estoque (no geral ou no numero pedido), a coleta vira ERRO com o motivo.
+function escolherTamanho_(resultado, opcoes, tamanho) {
+  const tamanhos = opcoes.map(o => o.tamanho);
+  resultado.obs = 'Tamanhos com estoque: ' + (tamanhos.length ? tamanhos.join(', ') : 'nenhum');
+  const validas = opcoes.filter(o => o.preco > 0 && (!tamanho || o.tamanho === tamanho));
+  if (!validas.length) {
+    resultado.erro = tamanho ? 'Esgotado no tamanho ' + tamanho : 'Esgotado em todos os tamanhos';
+    return resultado;
+  }
+  const melhor = validas.reduce((a, b) => (b.preco < a.preco ? b : a));
+  return Object.assign(resultado, {
+    precoPix: round2_(melhor.preco),
+    precoDe: melhor.precoDe > melhor.preco ? round2_(melhor.precoDe) : '',
+    descontoPix: melhor.precoDe > melhor.preco ? Math.round((1 - melhor.preco / melhor.precoDe) * 100) + '% de desconto' : '',
+    status: 'OK',
+    confianca: 'Alta'
+  });
+}
+
+// VTEX: a API devolve [produto]; cada item e um tamanho e o preco esta em sellers[].commertialOffer.
+// Price = preco de venda, ListPrice = preco "de". Item com AvailableQuantity 0 esta esgotado (o preco dele continua la, desatualizado).
+function parseVtex_(texto, tamanho) {
+  const resultado = resultadoVazio_('vtex_api');
+  let produtos;
+  try {
+    produtos = JSON.parse(texto);
+  } catch (e) {
+    return Object.assign(resultado, {erro: 'API VTEX nao respondeu JSON (bloqueio ou pagina mudou)'});
+  }
+  const produto = Array.isArray(produtos) ? produtos[0] : null;
+  if (!produto) return Object.assign(resultado, {erro: 'Produto nao encontrado na API VTEX (saiu do catalogo?)'});
+  resultado.titulo = produto.productName || '';
+  const opcoes = [];
+  (produto.items || []).forEach(item => {
+    const tam = String((item.Tamanho || [])[0] || String(item.name || '').split(' - ').pop()).trim();
+    (item.sellers || []).forEach(s => {
+      const oferta = s.commertialOffer || {};
+      if (Number(oferta.AvailableQuantity) > 0) opcoes.push({tamanho: tam, preco: Number(oferta.Price) || 0, precoDe: Number(oferta.ListPrice) || 0});
+    });
+  });
+  return escolherTamanho_(resultado, opcoes, tamanho);
+}
+
+// Dafiti: o preco de venda esta em itemprop="price" content="109.99" e o preco "de" em data-field="specialPrice".
+// Os tamanhos listados na pagina (radio-button-size-block) sao os que tem estoque.
+function parseDafiti_(html, tamanho) {
+  const resultado = resultadoVazio_('dafiti_itemprop');
+  const titulo = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  resultado.titulo = titulo ? stripHtml_(titulo[1]) : '';
+  const preco = Number((html.match(/itemprop="price"\s+content="([\d.]+)"/i) || [])[1]) || 0;
+  if (!preco) return Object.assign(resultado, {erro: 'Preco nao encontrado na pagina da Dafiti (produto saiu ou pagina mudou)'});
+  const precoDe = parsePrice_((html.match(/data-field="specialPrice"[^>]*>\s*(R\$\s*[\d.]+,\d{2})/i) || [])[1]) || 0;
+  const re = /radio-button-size-block"\s*data-value="[^"]+"[\s\S]*?<span data-field="name">([^<]+)<\/span>/g;
+  const opcoes = [];
+  let m;
+  while ((m = re.exec(html)) !== null) opcoes.push({tamanho: m[1].trim(), preco: preco, precoDe: precoDe});
+  return escolherTamanho_(resultado, opcoes, tamanho);
 }
 
 // Coleta um produto e grava em Coletas_Brutas, Coletas_Fatiadas e Historico.
@@ -504,7 +612,7 @@ function atualizarAcompanhamento() {
   console.log('Acompanhamento atualizado: ' + rows.length + ' produtos');
 }
 
-// Roda o parser (Kabum ou AliExpress) em todos os produtos ativos e so mostra no log (nao grava nada na planilha).
+// Roda o leitor de cada loja (Kabum, AliExpress, VTEX ou Dafiti) em todos os produtos ativos e so mostra no log (nao grava nada na planilha).
 function testarParserKabum() {
   const values = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Produtos').getDataRange().getValues();
   const headers = values.shift();
@@ -517,8 +625,18 @@ function testarParserKabum() {
 // Testa o leitor do AliExpress com os itens de PRODUCTS (nao precisam estar na planilha) e so mostra no log.
 // Rode depois do clasp push: ERRO aqui quer dizer que os servidores do Google nao estao conseguindo ler a busca.
 function testarParserAliExpress() {
+  testarProdutosDoCodigo_(['aliexpress']);
+}
+
+// Testa os leitores das lojas que nao sao a Kabum (AliExpress, VTEX e Dafiti) com os itens de PRODUCTS e so mostra no log.
+// Rode depois do clasp push: ERRO por bloqueio aqui quer dizer que os servidores do Google nao conseguem ler a loja.
+function testarLojasNovas() {
+  testarProdutosDoCodigo_(['aliexpress', 'vtex', 'dafiti']);
+}
+
+function testarProdutosDoCodigo_(tipos) {
   const idx = Object.fromEntries(CABECALHO_PRODUTOS.map((h, i) => [h, i]));
-  PRODUCTS.map(p => linhaProduto_(p, '')).filter(r => ehAliExpress_(r[idx.loja])).forEach(r => testarProduto_(r, idx));
+  PRODUCTS.map(p => linhaProduto_(p, '')).filter(r => tipos.indexOf(tipoLoja_(r, idx)) >= 0).forEach(r => testarProduto_(r, idx));
 }
 
 function testarProduto_(r, idx) {
@@ -527,7 +645,7 @@ function testarProduto_(r, idx) {
     const parsed = parsePagina_(pagina.html, r, idx);
     const avaliacao = avaliarColeta_(pagina.status, parsed, Number(r[idx.preco_maximo]) || 0);
     console.log(r[idx.id] + ' | HTTP ' + pagina.status + ' | ' + avaliacao.status + (avaliacao.motivo ? ' (' + avaliacao.motivo + ')' : '') +
-      ' | PIX ' + parsed.precoPix + ' | normal ' + parsed.precoDe + ' | ' + parsed.selector + ' | ' + parsed.descontoPix + (parsed.obs && parsed.selector === 'ali_busca' ? ' | ' + parsed.obs : ''));
+      ' | PIX ' + parsed.precoPix + ' | normal ' + parsed.precoDe + ' | ' + parsed.selector + ' | ' + parsed.descontoPix + (parsed.obs && tipoLoja_(r, idx) !== 'kabum' ? ' | ' + parsed.obs : ''));
   } catch (err) {
     console.log(r[idx.id] + ' | EXCECAO ' + err.message);
   }

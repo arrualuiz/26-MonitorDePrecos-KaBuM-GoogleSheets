@@ -1,6 +1,16 @@
 # Changelog
 
-## Próxima versão – 19/10/2026 (ainda falta o `clasp push`)
+## 13/11/2026 – lojas de tênis
+
+- `clasp push` feito (às 19h57 e às 20h03): o cadastro pelo código, o leitor do AliExpress e os produtos de 19/10 e 02/11 estão no ar. Antes do push conferi que o código online era o do commit `f409b58` e que o `backup_codigo_original_2026-09-29.html` era igual ao commit v1; o push tirou esse arquivo do Apps Script.
+- `tipoLoja_()` escolhe o leitor: AliExpress pela `loja`, VTEX (`LOJAS_VTEX`: Artwalk, Authentic Feet, Magic Feet) e Dafiti pelo endereço, Kabum para o resto.
+- Novo leitor `parseVtex_()`: API pública de busca da loja; só conta os números com estoque (a VTEX mostra preço de produto esgotado).
+- Novo leitor `parseDafiti_()`: `itemprop="price"` da página e os números listados como disponíveis.
+- `tam:<numero>` em `selector_preco_pix` para acompanhar um número só; os números com estoque vão para `observacoes`.
+- Nova `testarLojasNovas()`; `testarParserAliExpress()` passou a usar a mesma base (`testarProdutosDoCodigo_`).
+- Produtos novos `CHI-001` a `CHI-005`: chinelo Nike Victori One, 4 anúncios da Dafiti (R$ 109,99 a R$ 169,99) e 1 da Authentic Feet (R$ 199,99), todos com alvo de R$ 100.
+
+## 19/10/2026 – cadastro pelo código e AliExpress (no ar desde 13/11)
 
 - Cadastro pelo código: produto novo vai no fim de `PRODUCTS` e entra sozinho na aba Produtos no começo de `coletarAgora()` (ou rodando `sincronizarProdutos()`). Compara por `id` e `url` e só acrescenta: produtos que já estão na aba não são alterados. Se a sincronização falhar, fica um `ERRO` em Logs e a coleta segue.
 - `PRODUCTS` ganhou a coluna opcional `observacoes`.
