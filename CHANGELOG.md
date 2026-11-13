@@ -8,6 +8,7 @@
 - Novo leitor `parseDafiti_()`: `itemprop="price"` da página e os números listados como disponíveis.
 - `tam:<numero>` em `selector_preco_pix` para acompanhar um número só; os números com estoque vão para `observacoes`.
 - Nova `testarLojasNovas()`; `testarParserAliExpress()` passou a usar a mesma base (`testarProdutosDoCodigo_`).
+- `ferramentas/testar-local.js`: roda os leitores no PC (Node + curl), por id ou por link, antes de cadastrar.
 - Produtos novos `CHI-001` a `CHI-005`: chinelo Nike Victori One, 4 anúncios da Dafiti (R$ 109,99 a R$ 169,99) e 1 da Authentic Feet (R$ 199,99), todos com alvo de R$ 100.
 
 ## 19/10/2026 – cadastro pelo código e AliExpress (no ar desde 13/11)

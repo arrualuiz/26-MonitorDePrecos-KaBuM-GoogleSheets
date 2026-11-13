@@ -164,7 +164,7 @@ Produto novo entra **pelo código**:
    - `preco_maximo` = o preço PIX de hoje (serve de referência para `CARO` e para o preço suspeito);
    - `preco_alvo` opcional (`''` se não tiver), para receber `COMPRAR`;
    - `observacoes` opcional; sem ela, fica "Cadastrado pelo codigo em dd/mm/aaaa".
-2. `node --check src/Code.js` e `clasp push`.
+2. `node ferramentas/testar-local.js <id>` (confere o preço), `node --check src/Code.js` e `clasp push`.
 3. Na próxima coleta das 23h o produto entra sozinho na aba Produtos (com `ativo` = `TRUE`) e já é coletado. Para ver na hora, rode `sincronizarProdutos()` pelo editor e depois `testarParserKabum()` (ou `testarLojasNovas()`, que testa direto do código os produtos que não são da Kabum).
 
 Depois de cadastrado, o produto é editado **na planilha**: a sincronização só acrescenta, então mudar o alvo ou o máximo dele em `PRODUCTS` não altera a aba Produtos.
@@ -209,6 +209,18 @@ clasp push                       # envia para o Apps Script
 # rode testarParserKabum / atualizarAcompanhamento pelo editor para testar
 git add -A && git commit -m "descreva a mudanca"
 ```
+
+### Testar aqui no PC, antes do push
+
+`ferramentas/testar-local.js` roda os leitores do `src/Code.js` no Node, com o `curl` no lugar do `UrlFetchApp`. Não grava nada e não precisa do Apps Script:
+
+```bash
+node ferramentas/testar-local.js                     # produtos de PRODUCTS que não são da Kabum
+node ferramentas/testar-local.js CHI-001 MON-001     # esses ids
+node ferramentas/testar-local.js <url> [tam:42]      # um link qualquer, antes de cadastrar (AliExpress: busca:<termo>)
+```
+
+As páginas saem do PC, não dos servidores do Google: uma loja que funciona aqui ainda pode bloquear lá. Depois do push, `testarLojasNovas()` no editor tira a dúvida.
 
 `clasp open` abre o editor online. `clasp logs` mostra logs (precisa de projeto GCP configurado; pelo editor é mais simples).
 
